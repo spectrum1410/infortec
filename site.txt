@@ -1,0 +1,143 @@
+import { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion } from "framer-motion";
+
+export default function InfortecStore() {
+  const [products, setProducts] = useState([
+    { id: 1, name: 'Notebook Gamer', price: 4500, image: '/notebook.jpg' },
+    { id: 2, name: 'Mouse Sem Fio', price: 120, image: '/mouse.jpg' },
+    { id: 3, name: 'Teclado Mecânico', price: 350, image: '/teclado.jpg' },
+  ]);
+  const [cart, setCart] = useState([]);
+  const [search, setSearch] = useState("");
+
+  const addToCart = (product) => {
+    const exists = cart.find((item) => item.id === product.id);
+    if (exists) {
+      setCart(
+        cart.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        )
+      );
+    } else {
+      setCart([...cart, { ...product, quantity: 1 }]);
+    }
+  };
+
+  const removeFromCart = (id) => {
+    setCart(cart.filter((item) => item.id !== id));
+  };
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const deleteProduct = (id) => {
+    setProducts(products.filter((p) => p.id !== id));
+  };
+
+  return (
+    <div className="p-4 max-w-7xl mx-auto">
+      <header className="flex items-center justify-between py-4">
+        <h1 className="text-4xl font-extrabold text-blue-600">INFOTEC</h1>
+        <Input
+          placeholder="Buscar produto..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-64"
+        />
+      </header>
+
+      <Tabs defaultValue="loja">
+        <TabsList>
+          <TabsTrigger value="loja">Loja</TabsTrigger>
+          <TabsTrigger value="painel">Painel de Controle</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="loja">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-4">
+            {filteredProducts.map((product) => (
+              <motion.div
+                key={product.id}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Card>
+                  <CardContent className="p-4">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-40 object-cover rounded mb-2"
+                    />
+                    <h2 className="text-xl font-semibold">{product.name}</h2>
+                    <p className="text-gray-600">R$ {product.price.toFixed(2)}</p>
+                    <Button className="mt-2 w-full" onClick={() => addToCart(product)}>
+                      Adicionar ao Carrinho
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-10">
+            <h2 className="text-2xl font-bold mb-2">Carrinho</h2>
+            {cart.length === 0 ? (
+              <p>Seu carrinho está vazio.</p>
+            ) : (
+              <ul>
+                {cart.map((item) => (
+                  <li key={item.id} className="flex justify-between py-2">
+                    <span>
+                      {item.name} x{item.quantity}
+                    </span>
+                    <div>
+                      <span className="mr-4">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                      <Button variant="destructive" onClick={() => removeFromCart(item.id)}>Remover</Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-4 font-bold text-xl">Total: R$ {total.toFixed(2)}</p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="painel">
+          <h2 className="text-2xl font-bold mb-4">Painel de Controle</h2>
+          <p className="mb-2">Adicionar novo produto:</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const name = e.target.name.value;
+            const price = parseFloat(e.target.price.value);
+            const image = e.target.image.value;
+            const newProduct = { id: Date.now(), name, price, image };
+            setProducts([...products, newProduct]);
+            e.target.reset();
+          }} className="flex flex-wrap gap-2 mb-4">
+            <Input name="name" placeholder="Nome do Produto" required />
+            <Input name="price" type="number" step="0.01" placeholder="Preço" required />
+            <Input name="image" type="url" placeholder="URL da Imagem" required />
+            <Button type="submit">Adicionar</Button>
+          </form>
+
+          <h3 className="text-xl font-semibold mt-4">Produtos Cadastrados ({products.length})</h3>
+          <ul className="space-y-2">
+            {products.map((product) => (
+              <li key={product.id} className="py-2 border-b flex justify-between items-center">
+                <span>{product.name} - R$ {product.price.toFixed(2)}</span>
+                <Button variant="destructive" onClick={() => deleteProduct(product.id)}>
+                  Excluir
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
